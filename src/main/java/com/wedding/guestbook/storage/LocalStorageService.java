@@ -8,7 +8,6 @@ import java.nio.file.Path;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 /** 개발용: ./storage 폴더에 저장하고 /files/** 로 내려준다 */
 @Configuration
@@ -38,9 +37,10 @@ public class LocalStorageService implements StorageService, WebMvcConfigurer {
 		}
 	}
 
+	/** 상대 경로로 내려서 프론트 개발 서버 프록시(/files → 백엔드)를 그대로 탄다 */
 	@Override
 	public String publicUrl(String key) {
-		return ServletUriComponentsBuilder.fromCurrentContextPath().path("/files/").path(key).toUriString();
+		return "/files/" + key;
 	}
 
 	@Override

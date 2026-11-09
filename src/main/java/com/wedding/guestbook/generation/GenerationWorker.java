@@ -4,6 +4,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.wedding.guestbook.character.CharacterGenerationProcessor;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,7 +21,7 @@ public class GenerationWorker {
 	private static final int MAX_ATTEMPTS = 3;
 
 	private final GenerationJobRepository jobs;
-	private final CharacterImageGenerator generator;
+	private final CharacterGenerationProcessor processor;
 	private final TransactionTemplate tx;
 
 	@Scheduled(fixedDelayString = "${app.generation.worker-delay}")
@@ -33,23 +35,22 @@ public class GenerationWorker {
 		}
 
 		try {
-			process(job);
+			switch (job.getType()) {
+				case CANDIDATES -> processor.generateCandidates(job.getCharacterId());
+				case SPRITE -> processor.generateSpriteSheet(job.getCharacterId());
+			}
 			tx.executeWithoutResult(status -> jobs.findById(job.getId()).ifPresent(GenerationJob::finish));
+			log.info("생성 완료 job={} type={} character={}", job.getId(), job.getType(), job.getCharacterId());
 		}
 		catch (RuntimeException e) {
 			log.warn("생성 작업 실패 job={} attempt={}", job.getId(), job.getAttempts(), e);
-			tx.executeWithoutResult(status -> jobs.findById(job.getId())
-					.ifPresent(j -> j.fail(e.getMessage(), MAX_ATTEMPTS)));
+			boolean gaveUp = Boolean.TRUE.equals(tx.execute(status -> jobs.findById(job.getId()).map(j -> {
+				j.fail(e.getMessage(), MAX_ATTEMPTS);
+				return j.getStatus() == GenerationJob.Status.FAILED;
+			}).orElse(false)));
+			if (gaveUp) {
+				processor.markFailed(job.getCharacterId());
+			}
 		}
-	}
-
-	private void process(GenerationJob job) {
-		// TODO: 작업 종류별 처리
-		//  CANDIDATES: 원본 사진 읽기 → generator.generateCandidates → 후처리(64px, 배경 제거)
-		//              → 저장소에 저장 → character_candidate 저장 → 캐릭터 상태 CHOOSING
-		//  SPRITE:     선택한 이미지 → generator.generateSpriteSheet → 후처리(프레임 정렬)
-		//              → 저장 → 캐릭터 상태 COMPLETE
-		log.info("생성 작업 처리 job={} type={} character={} (generator={})",
-				job.getId(), job.getType(), job.getCharacterId(), generator.getClass().getSimpleName());
 	}
 }

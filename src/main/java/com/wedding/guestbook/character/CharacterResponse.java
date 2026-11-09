@@ -15,6 +15,7 @@ public record CharacterResponse(
 		String status,
 		String imageUrl,
 		Sprite sprite,
+		boolean hidden,
 		OffsetDateTime createdAt) {
 
 	public record Sprite(String url, int columns, int rows) {
@@ -33,6 +34,7 @@ public record CharacterResponse(
 				c.getStatus().name().toLowerCase(Locale.ROOT),
 				c.getImageKey() == null ? null : storage.publicUrl(c.getImageKey()),
 				sprite,
+				c.isHidden(),
 				c.getCreatedAt());
 	}
 }

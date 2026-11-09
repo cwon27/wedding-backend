@@ -1,6 +1,7 @@
 package com.wedding.guestbook.generation;
 
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,6 +20,8 @@ public interface GenerationJobRepository extends JpaRepository<GenerationJob, Lo
 			for update skip locked
 			""", nativeQuery = true)
 	Optional<GenerationJob> lockNextQueued();
+
+	Optional<GenerationJob> findFirstByCharacterIdOrderByIdDesc(UUID characterId);
 
 	/** 하객에게 "대기 n번째" 를 보여주기 위한 앞선 작업 수 */
 	@Query("select count(j) from GenerationJob j where j.status = 'QUEUED' and j.id < :jobId")
