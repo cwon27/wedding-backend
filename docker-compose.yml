@@ -1,0 +1,11 @@
+# EC2 에서 실행: docker compose up -d --build
+# DB 는 Supabase 를 쓰므로 여기에는 백엔드만 있다. 접속 정보는 .env 에서 읽는다.
+services:
+  backend:
+    build: .
+    ports:
+      - "8080:8080"
+    env_file: .env
+    volumes:
+      - ./storage:/app/storage # S3 로 옮기기 전까지 업로드 파일 보관
+    restart: unless-stopped
