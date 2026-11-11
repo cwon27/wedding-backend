@@ -48,5 +48,11 @@ app:
     max-regenerations: 1 # 기기당 후보 재생성 횟수
 
   generation:
-    generator: ${IMAGE_GENERATOR:fake} # fake | api | comfyui
+    candidates: ${CANDIDATE_GENERATOR:fake} # 1단계 사진 → 후보: fake | gemini
+    sprite: ${SPRITE_GENERATOR:fake} #         2단계 후보 → 걷기 시트: fake (pixellab 예정)
     worker-delay: 2s
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model: ${GEMINI_MODEL:gemini-nano-banana-2.1}
+      api-revision: "2026-05-20" # 따옴표 없으면 YAML 이 날짜로 읽는다
+      timeout: 120s

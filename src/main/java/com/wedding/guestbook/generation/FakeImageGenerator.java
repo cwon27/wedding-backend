@@ -11,23 +11,19 @@ import java.util.stream.IntStream;
 
 import javax.imageio.ImageIO;
 
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.stereotype.Component;
-
 /**
  * 개발용 가짜 생성기. AI 를 호출하지 않고 단색 사람 모양 도트를 그린다.
  * 비용 없이 업로드 → 대기열 → 화면 표시 흐름 전체를 먼저 완성하기 위해 쓴다.
+ * 후보 / 스프라이트 두 역할을 모두 할 수 있어서 단계별로 따로 고를 수 있다.
  */
-@Component
-@ConditionalOnProperty(name = "app.generation.generator", havingValue = "fake")
-public class FakeImageGenerator implements CharacterImageGenerator {
+public class FakeImageGenerator implements CandidateGenerator, SpriteSheetGenerator {
 
 	private static final int SIZE = 64;
 	private static final Color[] COLORS = { new Color(0xE57373), new Color(0x64B5F6), new Color(0x81C784),
 			new Color(0xFFB74D) };
 
 	@Override
-	public List<byte[]> generateCandidates(byte[] photo) {
+	public List<byte[]> generateCandidates(byte[] photo, String photoMimeType) {
 		return IntStream.range(0, CANDIDATE_COUNT).mapToObj(i -> png(drawPerson(COLORS[i], 0))).toList();
 	}
 

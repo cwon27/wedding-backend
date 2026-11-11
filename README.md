@@ -9,7 +9,7 @@ src/main/java/com/wedding/guestbook/
 ├─ character/    하객 캐릭터 API, 폴링(since 커서)
 ├─ guestbook/    부부 설정 (방명록 1개)
 ├─ device/       로그인 없이 기기 구분 (HttpOnly 쿠키, @DeviceId)
-├─ generation/   이미지 생성 대기열 + 워커, CharacterImageGenerator (fake | api | comfyui)
+├─ generation/   이미지 생성 대기열 + 워커, 단계별 생성기(CandidateGenerator, SpriteSheetGenerator), 후처리
 ├─ storage/      이미지 저장소 (로컬 → S3)
 └─ config/       설정, CORS
 src/main/resources/db/migration/   Flyway 테이블 정의
@@ -29,10 +29,11 @@ IntelliJ 에서는 Project SDK 를 21 로 지정하고 `WeddingBackendApplicatio
 
 ## 이미지 생성기 바꾸기
 
-`.env` 의 `IMAGE_GENERATOR` 값만 바꾼다.
+캐릭터는 두 단계로 만든다. 단계마다 `.env` 값으로 생성기를 고른다.
 
-| 값 | 설명 |
-|---|---|
-| `fake` | AI 호출 없이 더미 도트 이미지 (개발용, 비용 0) |
-| `api` | 이미지 생성 API (구현 예정) |
-| `comfyui` | ComfyUI 서버 (구현 예정) |
+| 단계 | 설정 | 값 |
+|---|---|---|
+| 1. 사진 → 정면 캐릭터 후보 4장 | `CANDIDATE_GENERATOR` | `fake` (더미 도트, 비용 0) / `gemini` (`GEMINI_API_KEY` 필요) |
+| 2. 고른 캐릭터 → 걷기 스프라이트시트 | `SPRITE_GENERATOR` | `fake` / `pixellab` (예정) |
+
+어떤 생성기를 쓰든 결과는 `ImagePostProcessor` 가 배경 제거, 64px 맞춤으로 같은 형식으로 만든다.

@@ -2,13 +2,15 @@ package com.wedding.guestbook.character;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import com.wedding.guestbook.generation.CharacterImageGenerator;
+import com.wedding.guestbook.generation.CandidateGenerator;
 import com.wedding.guestbook.generation.ImagePostProcessor;
+import com.wedding.guestbook.generation.SpriteSheetGenerator;
 import com.wedding.guestbook.storage.StorageService;
 
 import lombok.RequiredArgsConstructor;
@@ -23,7 +25,11 @@ public class CharacterGenerationProcessor {
 
 	private final GuestCharacterRepository characters;
 	private final CharacterCandidateRepository candidates;
-	private final CharacterImageGenerator generator;
+	private static final Map<String, String> MIME_TYPES = Map.of(
+			"jpg", "image/jpeg", "png", "image/png", "webp", "image/webp");
+
+	private final CandidateGenerator candidateGenerator;
+	private final SpriteSheetGenerator spriteSheetGenerator;
 	private final ImagePostProcessor postProcessor;
 	private final StorageService storage;
 	private final TransactionTemplate tx;
@@ -32,7 +38,8 @@ public class CharacterGenerationProcessor {
 	public void generateCandidates(UUID characterId) {
 		GuestCharacter character = load(characterId);
 		int round = character.currentRound();
-		List<byte[]> images = generator.generateCandidates(storage.get(character.getPhotoKey()));
+		String photoKey = character.getPhotoKey();
+		List<byte[]> images = candidateGenerator.generateCandidates(storage.get(photoKey), mimeTypeOf(photoKey));
 
 		List<CharacterCandidate> saved = new ArrayList<>();
 		for (int slot = 0; slot < images.size(); slot++) {
@@ -51,7 +58,7 @@ public class CharacterGenerationProcessor {
 	/** 선택한 캐릭터 → 걷기 스프라이트시트 저장 → 상태 COMPLETE */
 	public void generateSpriteSheet(UUID characterId) {
 		GuestCharacter character = load(characterId);
-		byte[] sheet = postProcessor.spriteSheet(generator.generateSpriteSheet(storage.get(character.getImageKey())));
+		byte[] sheet = postProcessor.spriteSheet(spriteSheetGenerator.generateSpriteSheet(storage.get(character.getImageKey())));
 
 		String key = "characters/%s/sprite.png".formatted(characterId);
 		storage.put(key, sheet, "image/png");
@@ -62,6 +69,12 @@ public class CharacterGenerationProcessor {
 	/** 재시도 횟수를 다 쓴 경우 */
 	public void markFailed(UUID characterId) {
 		tx.executeWithoutResult(status -> characters.findById(characterId).ifPresent(GuestCharacter::generationFailed));
+	}
+
+	/** 저장할 때 붙인 확장자(characters/{id}/photo.jpg)로 사진 형식을 알아낸다 */
+	private static String mimeTypeOf(String key) {
+		String extension = key.substring(key.lastIndexOf('.') + 1);
+		return MIME_TYPES.getOrDefault(extension, "image/jpeg");
 	}
 
 	private GuestCharacter load(UUID characterId) {

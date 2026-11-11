@@ -16,9 +16,9 @@ class FakeImageGeneratorTest {
 
 	@Test
 	void 후보는_4장_64px() throws IOException {
-		var candidates = generator.generateCandidates(new byte[0]);
+		var candidates = generator.generateCandidates(new byte[0], "image/jpeg");
 
-		assertThat(candidates).hasSize(CharacterImageGenerator.CANDIDATE_COUNT);
+		assertThat(candidates).hasSize(CandidateGenerator.CANDIDATE_COUNT);
 		BufferedImage first = ImageIO.read(new ByteArrayInputStream(candidates.getFirst()));
 		assertThat(first.getWidth()).isEqualTo(64);
 		assertThat(first.getHeight()).isEqualTo(64);
