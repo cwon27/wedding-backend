@@ -1,5 +1,7 @@
 package com.wedding.guestbook.generation;
 
+import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,6 +22,17 @@ public interface GenerationJobRepository extends JpaRepository<GenerationJob, Lo
 			for update skip locked
 			""", nativeQuery = true)
 	Optional<GenerationJob> lockNextQueued();
+
+	/**
+	 * 시작한 지 오래됐는데 아직 RUNNING 인 작업 (처리 도중 서버가 꺼진 것으로 본다).
+	 * 서버가 여러 대여도 같은 작업을 두 곳에서 복구하지 않도록 잠그고 가져온다.
+	 */
+	@Query(value = """
+			select * from generation_job
+			where status = 'RUNNING' and started_at < :startedBefore
+			for update skip locked
+			""", nativeQuery = true)
+	List<GenerationJob> lockStaleRunning(OffsetDateTime startedBefore);
 
 	Optional<GenerationJob> findFirstByCharacterIdOrderByIdDesc(UUID characterId);
 

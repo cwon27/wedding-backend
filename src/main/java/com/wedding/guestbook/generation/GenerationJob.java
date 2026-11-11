@@ -28,6 +28,9 @@ public class GenerationJob {
 		QUEUED, RUNNING, DONE, FAILED
 	}
 
+	/** 작업 하나를 최대 몇 번 시도할지. 워커의 실패 처리와 멈춘 작업 복구가 같은 규칙을 쓴다 */
+	static final int MAX_ATTEMPTS = 3;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -70,9 +73,21 @@ public class GenerationJob {
 		finishedAt = OffsetDateTime.now();
 	}
 
-	void fail(String message, int maxAttempts) {
+	void fail(String message) {
 		error = message;
-		status = attempts < maxAttempts ? Status.QUEUED : Status.FAILED; // 횟수가 남았으면 다시 대기열로
+		status = attempts < MAX_ATTEMPTS ? Status.QUEUED : Status.FAILED; // 횟수가 남았으면 다시 대기열로
 		finishedAt = OffsetDateTime.now();
+	}
+
+	/**
+	 * 처리 도중 서버가 꺼져 RUNNING 으로 남은 작업. 실패 1회로 보고 fail 과 같은 규칙을 적용한다.
+	 * (start() 에서 이미 시도 횟수를 올렸으므로, 계속 꺼지는 작업도 결국 FAILED 로 끝난다)
+	 */
+	void recoverStale() {
+		fail("처리 중 서버가 중단되어 다시 시도합니다");
+	}
+
+	boolean isFailed() {
+		return status == Status.FAILED;
 	}
 }

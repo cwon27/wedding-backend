@@ -23,10 +23,13 @@ public record AppProperties(
 	}
 
 	/**
-	 * @param candidates 1단계(사진 → 후보) 생성기: fake | gemini
-	 * @param sprite     2단계(후보 → 걷기 시트) 생성기: fake (PixelLab 예정)
+	 * @param candidates         1단계(사진 → 후보) 생성기: fake | gemini
+	 * @param sprite             2단계(후보 → 걷기 시트) 생성기: fake (PixelLab 예정)
+	 * @param staleAfter         RUNNING 이 이 시간을 넘으면 서버가 꺼져 멈춘 작업으로 본다
+	 * @param staleCheckInterval 멈춘 작업을 확인하는 간격
 	 */
-	public record Generation(String candidates, String sprite, Duration workerDelay, Gemini gemini) {
+	public record Generation(String candidates, String sprite, Duration workerDelay,
+			Duration staleAfter, Duration staleCheckInterval, Gemini gemini) {
 	}
 
 	/**

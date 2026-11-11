@@ -51,6 +51,10 @@ app:
     candidates: ${CANDIDATE_GENERATOR:fake} # 1단계 사진 → 후보: fake | gemini
     sprite: ${SPRITE_GENERATOR:fake} #         2단계 후보 → 걷기 시트: fake (pixellab 예정)
     worker-delay: 2s
+    # 처리 도중 서버가 꺼져 RUNNING 으로 남은 작업 복구 (StaleJobRecovery).
+    # stale-after 는 정상 처리 시간(Gemini 타임아웃 120s 등)보다 넉넉히 길게: 짧으면 같은 작업이 두 번 처리된다
+    stale-after: 10m
+    stale-check-interval: 1m
     gemini:
       api-key: ${GEMINI_API_KEY:}
       model: ${GEMINI_MODEL:gemini-nano-banana-2.1}

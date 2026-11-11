@@ -18,8 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class GenerationWorker {
 
-	private static final int MAX_ATTEMPTS = 3;
-
 	private final GenerationJobRepository jobs;
 	private final CharacterGenerationProcessor processor;
 	private final TransactionTemplate tx;
@@ -45,8 +43,8 @@ public class GenerationWorker {
 		catch (RuntimeException e) {
 			log.warn("생성 작업 실패 job={} attempt={}", job.getId(), job.getAttempts(), e);
 			boolean gaveUp = Boolean.TRUE.equals(tx.execute(status -> jobs.findById(job.getId()).map(j -> {
-				j.fail(e.getMessage(), MAX_ATTEMPTS);
-				return j.getStatus() == GenerationJob.Status.FAILED;
+				j.fail(e.getMessage());
+				return j.isFailed();
 			}).orElse(false)));
 			if (gaveUp) {
 				processor.markFailed(job.getCharacterId());
