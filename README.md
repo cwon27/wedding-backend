@@ -2,6 +2,8 @@
 
 픽셀 방명록 백엔드 (Spring Boot 4, Java 21, Gradle). 프론트엔드는 `wedding-frontend` 레포.
 
+> 코드가 어떻게 동작하는지 자세한 설명은 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) 참고.
+
 ## 구조
 
 ```
